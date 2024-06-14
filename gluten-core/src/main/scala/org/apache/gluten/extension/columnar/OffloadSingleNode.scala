@@ -124,32 +124,10 @@ case class OffloadJoin() extends OffloadSingleNode with LogLevelUtil {
     }
     plan match {
       case plan: ShuffledHashJoinExec =>
-        val left = plan.left
-        val right = plan.right
         logDebug(s"Columnar Processing for ${plan.getClass} is currently supported.")
-        BackendsApiManager.getSparkPlanExecApiInstance
-          .genShuffledHashJoinExecTransformer(
-            plan.leftKeys,
-            plan.rightKeys,
-            plan.joinType,
-            TransformHints.getShuffleHashJoinBuildSide(plan),
-            plan.condition,
-            left,
-            right,
-            plan.isSkewJoin)
+        ShuffledHashJoinExecTransformerBase.from(plan)
       case plan: SortMergeJoinExec =>
-        val left = plan.left
-        val right = plan.right
-        logDebug(s"Columnar Processing for ${plan.getClass} is currently supported.")
-        BackendsApiManager.getSparkPlanExecApiInstance
-          .genSortMergeJoinExecTransformer(
-            plan.leftKeys,
-            plan.rightKeys,
-            plan.joinType,
-            plan.condition,
-            left,
-            right,
-            plan.isSkewJoin)
+        OffloadJoin.transformSortMergeJoinExec(plan)
       case plan: BroadcastHashJoinExec =>
         val left = plan.left
         val right = plan.right
@@ -181,7 +159,24 @@ case class OffloadJoin() extends OffloadSingleNode with LogLevelUtil {
       case other => other
     }
   }
+}
 
+object OffloadJoin {
+  def transformSortMergeJoinExec(smj: SortMergeJoinExec): TransformSupport = {
+    if (GlutenConfig.getConf.forceShuffledHashJoin) {
+      ShuffledHashJoinExecTransformerBase.from(smj)
+    } else {
+      BackendsApiManager.getSparkPlanExecApiInstance
+        .genSortMergeJoinExecTransformer(
+          smj.leftKeys,
+          smj.rightKeys,
+          smj.joinType,
+          smj.condition,
+          smj.left,
+          smj.right,
+          smj.isSkewJoin)
+    }
+  }
 }
 
 // Filter transformation.
