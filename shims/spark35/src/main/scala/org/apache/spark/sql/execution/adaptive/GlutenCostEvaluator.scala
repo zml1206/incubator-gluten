@@ -26,17 +26,16 @@ import org.apache.spark.sql.internal.SQLConf
  * contains [[ShuffledJoin]] and cost is the same.
  */
 case class GlutenCostEvaluator() extends CostEvaluator with SQLConfHelper {
+  private var isReOptimize = false
   override def evaluateCost(plan: SparkPlan): Cost = {
     val forceOptimizeSkewedJoin = conf.getConf(SQLConf.ADAPTIVE_FORCE_OPTIMIZE_SKEWED_JOIN)
     val simpleCost =
       SimpleCostEvaluator(forceOptimizeSkewedJoin).evaluateCost(plan).asInstanceOf[SimpleCost]
     var cost = simpleCost.value * 2
-    if (plan.exists(_.isInstanceOf[ShuffledJoin])) {
-      plan.logicalLink.map(_.stats.isRuntime) match {
-        case Some(true) => cost -= 1
-        case _ =>
-      }
+    if (isReOptimize && plan.exists(_.isInstanceOf[ShuffledJoin])) {
+      cost -= 1
     }
+    isReOptimize = !isReOptimize
     SimpleCost(cost)
   }
 }

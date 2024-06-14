@@ -24,22 +24,23 @@ import org.apache.spark.sql.execution.joins.ShuffledJoin
  * contains [[ShuffledJoin]] and cost is the same.
  */
 case class GlutenCostEvaluator() extends CostEvaluator {
+  private var isReOptimize = false
   override def evaluateCost(plan: SparkPlan): Cost = {
     val simpleCost =
       SimpleCostEvaluator.evaluateCost(plan).asInstanceOf[SimpleCost]
     var cost = simpleCost.value * 2
-    if (existsShuffledJoin(plan)) {
-      plan.logicalLink.map(_.stats.isRuntime) match {
-        case Some(true) => cost -= 1
-        case _ =>
-      }
+    if (isReOptimize && existsShuffledJoin(plan)) {
+      cost -= 1
     }
+    isReOptimize = !isReOptimize
     SimpleCost(cost)
   }
 
-  def existsShuffledJoin(plan: SparkPlan): Boolean = if (plan.isInstanceOf[ShuffledJoin]) {
-    true
-  } else {
-    plan.children.exists(existsShuffledJoin(_))
+  private def existsShuffledJoin(plan: SparkPlan): Boolean = {
+    if (plan.isInstanceOf[ShuffledJoin]) {
+      true
+    } else {
+      plan.children.exists(existsShuffledJoin)
+    }
   }
 }
