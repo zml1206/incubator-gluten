@@ -16,8 +16,6 @@
  */
 package org.apache.spark.sql
 
-import org.apache.spark.sql.execution.SparkPlan
-
 class GlutenJoinSuite extends JoinSuite with GlutenSQLTestsTrait {
 
   override def testNameBlackList: Seq[String] = Seq(
