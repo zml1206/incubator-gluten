@@ -390,7 +390,7 @@ object ShuffledHashJoinExecTransformerBase {
           if (rightSize <= leftSize) BuildRight else BuildLeft
         // Only the ShuffledHashJoinExec generated directly in some spark tests is not link
         // logical plan, such as OuterJoinSuite.
-        case _ => buildSide
+        case _ => Option(buildSide).getOrElse(BuildRight)
       }
     }
   }

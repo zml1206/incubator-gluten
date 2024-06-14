@@ -55,14 +55,4 @@ class GlutenJoinSuite extends JoinSuite with GlutenSQLTestsTrait {
         |""".stripMargin
     checkAnswer(spark.sql(sql), Seq(Row(0, 1), Row(1, 2), Row(2, 3)))
   }
-
-  testGluten(
-    "SPARK-43113: Full outer join with duplicate stream-side" +
-      " references in condition (SHJ)") {
-    def check(plan: SparkPlan): Unit = {
-      assert(collect(plan) { case _: ShuffledHashJoinExec => true }.size === 1)
-    }
-
-    dupStreamSideColTest("MERGE", check)
-  }
 }

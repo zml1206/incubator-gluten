@@ -16,33 +16,30 @@
  */
 package org.apache.spark.sql.execution.adaptive
 
-import org.apache.spark.sql.catalyst.SQLConfHelper
-import org.apache.spark.sql.catalyst.plans.logical.Join
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.execution.joins.ShuffledJoin
-import org.apache.spark.sql.internal.SQLConf
 
 /**
  * This [[CostEvaluator]] is to force use the new physical plan when AQE's new physical plan
  * contains [[ShuffledJoin]] and cost is the same.
  */
-case class GlutenCostEvaluator() extends CostEvaluator with SQLConfHelper {
+case class GlutenCostEvaluator() extends CostEvaluator {
   override def evaluateCost(plan: SparkPlan): Cost = {
-    val forceOptimizeSkewedJoin = conf.getConf(SQLConf.ADAPTIVE_FORCE_OPTIMIZE_SKEWED_JOIN)
     val simpleCost =
-      SimpleCostEvaluator(forceOptimizeSkewedJoin).evaluateCost(plan).asInstanceOf[SimpleCost]
+      SimpleCostEvaluator.evaluateCost(plan).asInstanceOf[SimpleCost]
     var cost = simpleCost.value * 2
-    if (plan.exists(_.isInstanceOf[ShuffledJoin])) {
-      // If the children of outer Join are all LogicalQueryStage, it means that the join has
-      // been reOptimized.
-      plan.logicalLink.map(_.collect { case j: Join => j }) match {
-        case Some(joins)
-            if joins(0).left.isInstanceOf[LogicalQueryStage]
-              && joins(0).right.isInstanceOf[LogicalQueryStage] =>
-          cost -= 1
+    if (existsShuffledJoin(plan)) {
+      plan.logicalLink.map(_.stats.isRuntime) match {
+        case Some(true) => cost -= 1
         case _ =>
       }
     }
     SimpleCost(cost)
+  }
+
+  def existsShuffledJoin(plan: SparkPlan): Boolean = if (plan.isInstanceOf[ShuffledJoin]) {
+    true
+  } else {
+    plan.children.exists(existsShuffledJoin(_))
   }
 }
