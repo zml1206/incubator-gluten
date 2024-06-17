@@ -1968,9 +1968,10 @@ object GlutenConfig {
     buildConf(GlutenConfig.GLUTEN_COST_EVALUATOR_ENABLED)
       .internal()
       .doc(
-        "If true and gluten enabled, use org.apache.spark.sql.execution.adaptive.GlutenCostEvaluator as custom cost " +
+        "If true and gluten enabled, use " +
+          "org.apache.spark.sql.execution.adaptive.GlutenCostEvaluator as custom cost " +
           "evaluator class, else follow the configuration " +
-          "org.apache.spark.sql.execution.adaptive.GlutenCostEvaluator")
+          "org.apache.spark.sql.execution.adaptive.GlutenCostEvaluator.")
       .booleanConf
       .createWithDefault(true)
 
