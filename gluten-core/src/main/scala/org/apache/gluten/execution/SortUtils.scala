@@ -21,7 +21,7 @@ import org.apache.spark.sql.execution.{ProjectExec, SortExec, SparkPlan}
 object SortUtils {
   def dropPartialSort(plan: SparkPlan): SparkPlan = plan match {
     case PartialSortChild(p) => p
-    case ProjectChild(PartialSortChild(ProjectChild(p))) => p
+    case ProjectChild(PartialSortChild(ProjectChild(p))) if plan.outputSet == p.outputSet => p
     case _ => plan
   }
 
