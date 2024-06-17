@@ -2001,5 +2001,4 @@ object GlutenConfig {
       .doubleConf
       .checkValue(v => v >= 0 && v <= 1, "offheap sizing memory fraction must between [0, 1]")
       .createWithDefault(0.6)
-
 }

@@ -143,7 +143,7 @@ private[gluten] class GlutenDriverPlugin extends DriverPlugin with Logging {
     }
     conf.set(SPARK_SESSION_EXTS_KEY, extensions)
 
-    // adaptive custom cost evaluatorClass
+    // adaptive custom cost evaluator class
     if (GlutenConfig.getConf.enableGluten && GlutenConfig.getConf.enableGlutenCostEvaluator) {
       val costEvaluator = "org.apache.spark.sql.execution.adaptive.GlutenCostEvaluator"
       conf.set(SQLConf.ADAPTIVE_CUSTOM_COST_EVALUATOR_CLASS.key, costEvaluator)
