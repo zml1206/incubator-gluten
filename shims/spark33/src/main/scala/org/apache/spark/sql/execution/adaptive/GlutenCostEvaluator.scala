@@ -24,7 +24,7 @@ import org.apache.spark.sql.internal.SQLConf
 case class GlutenCost(value: Long, planId: Int) extends Cost {
   override def compare(that: Cost): Int = that match {
     case GlutenCost(thatValue, thatId) =>
-      if (value < thatValue || (value == thatValue && planId > thatId)) -1
+      if (value < thatValue || (value == thatValue && planId != thatId)) -1
       else if (value > thatValue) 1
       else 0
     case _ =>
