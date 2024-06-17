@@ -16,31 +16,24 @@
  */
 package org.apache.spark.sql.execution.adaptive
 
+import org.apache.spark.sql.errors.QueryExecutionErrors
 import org.apache.spark.sql.execution.SparkPlan
-import org.apache.spark.sql.execution.joins.ShuffledJoin
 
-/**
- * This [[CostEvaluator]] is to force use the new physical plan when AQE's new physical plan
- * contains [[ShuffledJoin]] and cost is the same.
- */
-case class GlutenCostEvaluator() extends CostEvaluator {
-  private var isReOptimize = false
-  override def evaluateCost(plan: SparkPlan): Cost = {
-    val simpleCost =
-      SimpleCostEvaluator.evaluateCost(plan).asInstanceOf[SimpleCost]
-    var cost = simpleCost.value * 2
-    if (isReOptimize && existsShuffledJoin(plan)) {
-      cost -= 1
-    }
-    isReOptimize = !isReOptimize
-    SimpleCost(cost)
+case class GlutenCost(value: Long, planId: Int) extends Cost {
+  override def compare(that: Cost): Int = that match {
+    case GlutenCost(thatValue, thatId) =>
+      if (value < thatValue || (value == thatValue && planId > thatId)) -1
+      else if (value > thatValue) 1
+      else 0
+    case _ =>
+      throw QueryExecutionErrors.cannotCompareCostWithTargetCostError(that.toString)
   }
+}
 
-  private def existsShuffledJoin(plan: SparkPlan): Boolean = {
-    if (plan.isInstanceOf[ShuffledJoin]) {
-      true
-    } else {
-      plan.children.exists(existsShuffledJoin)
-    }
+/** This [[CostEvaluator]] is to force use the new physical plan when cost is equal. */
+case class GlutenCostEvaluator() extends CostEvaluator {
+  override def evaluateCost(plan: SparkPlan): Cost = {
+    val simpleCost = SimpleCostEvaluator.evaluateCost(plan).asInstanceOf[SimpleCost]
+    GlutenCost(simpleCost.value, plan.id)
   }
 }

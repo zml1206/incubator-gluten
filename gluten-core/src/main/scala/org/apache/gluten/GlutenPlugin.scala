@@ -144,9 +144,13 @@ private[gluten] class GlutenDriverPlugin extends DriverPlugin with Logging {
     conf.set(SPARK_SESSION_EXTS_KEY, extensions)
 
     // sql adaptive customCostEvaluatorClass
-    conf.set(
-      SQLConf.ADAPTIVE_CUSTOM_COST_EVALUATOR_CLASS.key,
-      "org.apache.spark.sql.execution.adaptive.GlutenCostEvaluator")
+    val costEvaluator = "org.apache.spark.sql.execution.adaptive.GlutenCostEvaluator"
+    if (
+      conf.get(SQLConf.ADAPTIVE_CUSTOM_COST_EVALUATOR_CLASS.key, costEvaluator) != costEvaluator
+    ) {
+      throw new GlutenException("Gluten does not support custom cost evaluator.")
+    }
+    conf.set(SQLConf.ADAPTIVE_CUSTOM_COST_EVALUATOR_CLASS.key, costEvaluator)
 
     // check memory off-heap enabled and size
     val minOffHeapSize = "1MB"
