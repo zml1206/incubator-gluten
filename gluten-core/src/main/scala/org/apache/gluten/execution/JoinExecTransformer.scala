@@ -32,7 +32,7 @@ import org.apache.spark.sql.catalyst.optimizer.{BuildLeft, BuildRight, BuildSide
 import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.catalyst.plans.logical.Join
 import org.apache.spark.sql.catalyst.plans.physical._
-import org.apache.spark.sql.execution.{ExpandOutputPartitioningShim, ExplainUtils, SortExec, SparkPlan}
+import org.apache.spark.sql.execution.{ExpandOutputPartitioningShim, ExplainUtils, SparkPlan}
 import org.apache.spark.sql.execution.joins.{BaseJoinExec, HashedRelationBroadcastMode, HashJoin, ShuffledHashJoinExec, ShuffledJoin, SortMergeJoinExec}
 import org.apache.spark.sql.execution.metric.SQLMetric
 import org.apache.spark.sql.types._
@@ -395,14 +395,6 @@ object ShuffledHashJoinExecTransformerBase {
     }
   }
 
-  private def dropPartialSort(plan: SparkPlan): SparkPlan = plan match {
-    case sort: SortExecTransformer if !sort.global =>
-      sort.child
-    case sort: SortExec if !sort.global =>
-      sort.child
-    case _ => plan
-  }
-
   def from(shj: ShuffledHashJoinExec): ShuffledHashJoinExecTransformerBase = {
     BackendsApiManager.getSparkPlanExecApiInstance
       .genShuffledHashJoinExecTransformer(
@@ -424,8 +416,8 @@ object ShuffledHashJoinExecTransformerBase {
         smj.joinType,
         getBuildSide(smj),
         smj.condition,
-        dropPartialSort(smj.left),
-        dropPartialSort(smj.right),
+        SortUtils.dropPartialSort(smj.left),
+        SortUtils.dropPartialSort(smj.right),
         smj.isSkewJoin
       )
   }

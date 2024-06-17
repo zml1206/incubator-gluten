@@ -19,10 +19,10 @@ package org.apache.spark.sql.execution.adaptive
 import org.apache.spark.sql.errors.QueryExecutionErrors
 import org.apache.spark.sql.execution.SparkPlan
 
-case class GlutenCost(value: Long, planId: Int) extends Cost {
+case class GlutenCost(value: Long, plan: SparkPlan) extends Cost {
   override def compare(that: Cost): Int = that match {
-    case GlutenCost(thatValue, thatId) =>
-      if (value < thatValue || (value == thatValue && planId != thatId)) -1
+    case GlutenCost(thatValue, thatPlan) =>
+      if (value < thatValue || (value == thatValue && !plan.eq(thatPlan))) -1
       else if (value > thatValue) 1
       else 0
     case _ =>
@@ -34,6 +34,6 @@ case class GlutenCost(value: Long, planId: Int) extends Cost {
 case class GlutenCostEvaluator() extends CostEvaluator {
   override def evaluateCost(plan: SparkPlan): Cost = {
     val simpleCost = SimpleCostEvaluator.evaluateCost(plan).asInstanceOf[SimpleCost]
-    GlutenCost(simpleCost.value, plan.id)
+    GlutenCost(simpleCost.value, plan)
   }
 }

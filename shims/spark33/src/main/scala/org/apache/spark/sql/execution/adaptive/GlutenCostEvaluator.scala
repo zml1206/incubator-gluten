@@ -21,10 +21,10 @@ import org.apache.spark.sql.errors.QueryExecutionErrors
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.internal.SQLConf
 
-case class GlutenCost(value: Long, planId: Int) extends Cost {
+case class GlutenCost(value: Long, plan: SparkPlan) extends Cost {
   override def compare(that: Cost): Int = that match {
-    case GlutenCost(thatValue, thatId) =>
-      if (value < thatValue || (value == thatValue && planId != thatId)) -1
+    case GlutenCost(thatValue, thatPlan) =>
+      if (value < thatValue || (value == thatValue && !plan.eq(thatPlan))) -1
       else if (value > thatValue) 1
       else 0
     case _ =>
@@ -39,6 +39,6 @@ case class GlutenCostEvaluator() extends CostEvaluator with SQLConfHelper {
     val simpleCost = SimpleCostEvaluator(forceOptimizeSkewedJoin)
       .evaluateCost(plan)
       .asInstanceOf[SimpleCost]
-    GlutenCost(simpleCost.value, plan.id)
+    GlutenCost(simpleCost.value, plan)
   }
 }
