@@ -17,28 +17,13 @@
 package org.apache.spark.sql.execution.adaptive
 
 import org.apache.spark.sql.catalyst.SQLConfHelper
-import org.apache.spark.sql.errors.QueryExecutionErrors
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.internal.SQLConf
-
-case class GlutenCost(value: Long, plan: SparkPlan) extends Cost {
-  override def compare(that: Cost): Int = that match {
-    case GlutenCost(thatValue, thatPlan) =>
-      if (value < thatValue || (value == thatValue && !plan.eq(thatPlan))) -1
-      else if (value > thatValue) 1
-      else 0
-    case _ =>
-      throw QueryExecutionErrors.cannotCompareCostWithTargetCostError(that.toString)
-  }
-}
 
 /** This [[CostEvaluator]] is to force use the new physical plan when cost is equal. */
 case class GlutenCostEvaluator() extends CostEvaluator with SQLConfHelper {
   override def evaluateCost(plan: SparkPlan): Cost = {
     val forceOptimizeSkewedJoin = conf.getConf(SQLConf.ADAPTIVE_FORCE_OPTIMIZE_SKEWED_JOIN)
-    val simpleCost = SimpleCostEvaluator(forceOptimizeSkewedJoin)
-      .evaluateCost(plan)
-      .asInstanceOf[SimpleCost]
-    GlutenCost(simpleCost.value, plan)
+    new GlutenCost(SimpleCostEvaluator(forceOptimizeSkewedJoin), plan)
   }
 }
