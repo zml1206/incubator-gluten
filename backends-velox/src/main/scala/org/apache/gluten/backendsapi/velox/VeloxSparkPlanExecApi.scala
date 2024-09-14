@@ -693,7 +693,7 @@ class VeloxSparkPlanExecApi extends SparkPlanExecApi {
       childTransformer: ExpressionTransformer,
       ordinal: Int,
       original: GetStructField): ExpressionTransformer = {
-    VeloxGetStructFieldTransformer(substraitExprName, childTransformer, ordinal, original)
+    VeloxGetStructFieldTransformer(substraitExprName, childTransformer, original)
   }
 
   /**
