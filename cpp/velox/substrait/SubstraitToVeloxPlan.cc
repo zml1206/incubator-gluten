@@ -1669,7 +1669,8 @@ bool SubstraitToVeloxPlanConverter::canPushdownOr(
   }
 
   static const std::unordered_set<std::string> supportedOrFunctions = {sIsNotNull, sGte, sGt, sLte, sLt, sEqual};
-
+  // The first singularOrList needs to check in range.
+  bool sign = false;
   for (const auto& arg : scalarFunction.arguments()) {
     if (arg.value().has_scalar_function()) {
       auto nameSpec =
@@ -1686,14 +1687,15 @@ bool SubstraitToVeloxPlanConverter::canPushdownOr(
       }
     } else if (arg.value().has_singular_or_list()) {
       const auto& singularOrList = arg.value().singular_or_list();
+      // Disable IN pushdown for int-like types.
       if (!canPushdownSingularOrList(singularOrList, true)) {
         return false;
       }
       uint32_t fieldIdx = getColumnIndexFromSingularOrList(singularOrList);
-      // Disable IN pushdown for int-like types.
-      if (!rangeRecorders.at(fieldIdx).setInRange(true /*forOrRelation*/)) {
+      if (!rangeRecorders.at(fieldIdx).setInRange(sign /*forOrRelation*/)) {
         return false;
       }
+      sign = true;
     } else {
       // Or relation betweeen other expressions is not supported to be pushded
       // down currently.
