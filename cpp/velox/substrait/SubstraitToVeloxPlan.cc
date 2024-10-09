@@ -1669,15 +1669,13 @@ bool SubstraitToVeloxPlanConverter::canPushdownOr(
   }
 
   static const std::unordered_set<std::string> supportedOrFunctions = {sIsNotNull, sGte, sGt, sLte, sLt, sEqual};
-  // The first singularOrList needs to check in range.
-  bool sign = false;
+  uint32_t fieldIdx;
   for (const auto& arg : scalarFunction.arguments()) {
     if (arg.value().has_scalar_function()) {
       auto nameSpec =
           SubstraitParser::findFunctionSpec(functionMap_, arg.value().scalar_function().function_reference());
       auto functionName = SubstraitParser::getNameBeforeDelimiter(nameSpec);
 
-      uint32_t fieldIdx;
       bool isFieldOrWithLiteral = fieldOrWithLiteral(arg.value().scalar_function().arguments(), fieldIdx);
       if (supportedOrFunctions.find(functionName) == supportedOrFunctions.end() || !isFieldOrWithLiteral ||
           !rangeRecorders.at(fieldIdx).setCertainRangeForFunction(
@@ -1691,18 +1689,17 @@ bool SubstraitToVeloxPlanConverter::canPushdownOr(
       if (!canPushdownSingularOrList(singularOrList, true)) {
         return false;
       }
-      uint32_t fieldIdx = getColumnIndexFromSingularOrList(singularOrList);
-      if (!rangeRecorders.at(fieldIdx).setInRange(sign /*forOrRelation*/)) {
+      fieldIdx = getColumnIndexFromSingularOrList(singularOrList);
+      if (!rangeRecorders.at(fieldIdx).setInRange(true /*forOrRelation*/)) {
         return false;
       }
-      sign = true;
     } else {
       // Or relation betweeen other expressions is not supported to be pushded
       // down currently.
       return false;
     }
   }
-  return true;
+  return rangeRecorders.at(fieldIdx).setOrRange();
 }
 
 void SubstraitToVeloxPlanConverter::separateFilters(

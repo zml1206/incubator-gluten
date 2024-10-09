@@ -286,6 +286,16 @@ class SubstraitToVeloxPlanConverter {
       return true;
     }
 
+    /// Set the existence of or-range and returns whether it can coexist with
+    /// existing conditions for this field.
+    bool setOrRange() {
+      if (inRange_ || orRange_) {
+        return false;
+      }
+      orRange_ = true;
+      return true;
+    }
+
     /// Set the existence of IsNull and returns whether it can coexist with
     /// existing conditions for this field.
     bool setIsNull() {
@@ -312,6 +322,9 @@ class SubstraitToVeloxPlanConverter {
 
     /// The existence of multi-range.
     bool multiRange_ = false;
+
+    /// The existence of or-range.
+    bool orRange_ = false;
 
     /// The existence of IsNull.
     bool isNull_ = false;
