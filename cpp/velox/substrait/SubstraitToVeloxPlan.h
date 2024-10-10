@@ -286,16 +286,6 @@ class SubstraitToVeloxPlanConverter {
       return true;
     }
 
-    /// Set the existence of or-range and returns whether it can coexist with
-    /// existing conditions for this field.
-    bool setOrRange() {
-      if (inRange_ || orRange_) {
-        return false;
-      }
-      orRange_ = true;
-      return true;
-    }
-
     /// Set the existence of IsNull and returns whether it can coexist with
     /// existing conditions for this field.
     bool setIsNull() {
@@ -304,6 +294,15 @@ class SubstraitToVeloxPlanConverter {
       }
       isNull_ = true;
       return true;
+    }
+
+    /// Function canPushdownOr will change the range. If it cannot be pushed down,
+    /// the range needs to be reset.
+    void resetMultiRange() {
+      multiRange_ = false;
+      leftBound_ = false;
+      rightBound_ = false;
+      isNull_ = false;
     }
 
     /// Set certain existence according to function name and returns whether it
@@ -322,9 +321,6 @@ class SubstraitToVeloxPlanConverter {
 
     /// The existence of multi-range.
     bool multiRange_ = false;
-
-    /// The existence of or-range.
-    bool orRange_ = false;
 
     /// The existence of IsNull.
     bool isNull_ = false;
@@ -481,10 +477,10 @@ class SubstraitToVeloxPlanConverter {
       const ::substrait::Expression_SingularOrList& singularOrList,
       bool disableIntLike = false);
 
-  /// Check whether the children functions of this scalar function have the same
-  /// column index. Curretly used to check whether the two chilren functions of
-  /// 'or' expression are effective on the same column.
-  static bool childrenFunctionsOnSameField(const ::substrait::Expression_ScalarFunction& function);
+  /// Check whether the children functions of this scalar function have the same column index.
+  /// If the same, return field index, otherwise return -1. Curretly used to check whether the
+  /// two chilren functions of 'or' expression are effective on the same column.
+  static int64_t childrenFunctionsOnSameField(const ::substrait::Expression_ScalarFunction& function);
 
   /// Extract the scalar function, and set the filter info for different types
   /// of columns. If reverse is true, the opposite filter info will be set.
