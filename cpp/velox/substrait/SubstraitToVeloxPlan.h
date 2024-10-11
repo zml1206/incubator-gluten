@@ -478,9 +478,9 @@ class SubstraitToVeloxPlanConverter {
       bool disableIntLike = false);
 
   /// Check whether the children functions of this scalar function have the same column index.
-  /// If the same, return field index, otherwise return -1. Curretly used to check whether the
+  /// If the same, return field index, otherwise return UINT32_MAX. Curretly used to check whether the
   /// two chilren functions of 'or' expression are effective on the same column.
-  static int64_t childrenFunctionsOnSameField(const ::substrait::Expression_ScalarFunction& function);
+  static uint32_t childrenFunctionsOnSameField(const ::substrait::Expression_ScalarFunction& function);
 
   /// Extract the scalar function, and set the filter info for different types
   /// of columns. If reverse is true, the opposite filter info will be set.

@@ -1581,10 +1581,11 @@ bool SubstraitToVeloxPlanConverter::fieldOrWithLiteral(
   return fieldExists && literalExists;
 }
 
-int64_t SubstraitToVeloxPlanConverter::childrenFunctionsOnSameField(
+uint32_t SubstraitToVeloxPlanConverter::childrenFunctionsOnSameField(
     const ::substrait::Expression_ScalarFunction& function) {
   // Get the column indices of the children functions.
   std::vector<uint32_t> colIndices;
+  uint32_t fieldIdx = UINT32_MAX;
   for (const auto& arg : function.arguments()) {
     if (arg.value().has_scalar_function()) {
       const auto& scalarFunction = arg.value().scalar_function();
@@ -1594,7 +1595,7 @@ int64_t SubstraitToVeloxPlanConverter::childrenFunctionsOnSameField(
           VELOX_CHECK(field.has_direct_reference());
           uint32_t colIdx;
           if (!SubstraitParser::parseReferenceSegment(field.direct_reference(), colIdx)) {
-            return -1;
+            return fieldIdx;
           }
           colIndices.emplace_back(colIdx);
         }
@@ -1603,15 +1604,17 @@ int64_t SubstraitToVeloxPlanConverter::childrenFunctionsOnSameField(
       const auto& singularOrList = arg.value().singular_or_list();
       colIndices.emplace_back(getColumnIndexFromSingularOrList(singularOrList));
     } else {
-      return -1;
+      return fieldIdx;
     }
   }
-
+  if (colIndices.empty()) {
+    return fieldIdx;
+  }
   if (std::all_of(colIndices.begin(), colIndices.end(), [&](uint32_t idx) { return idx == colIndices[0]; })) {
     // All indices are the same.
-    return colIndices[0];
+    fieldIdx = colIndices[0];
   }
-  return -1;
+  return fieldIdx;
 }
 
 bool SubstraitToVeloxPlanConverter::canPushdownFunction(
@@ -1664,12 +1667,8 @@ bool SubstraitToVeloxPlanConverter::canPushdownOr(
     std::vector<RangeRecorder>& rangeRecorders) {
   // OR Conditon whose children functions are on different columns is not
   // supported to be pushed down.
-  auto colIdx = childrenFunctionsOnSameField(scalarFunction);
-  if (colIdx < 0) {
-    return false;
-  }
-  uint32_t fieldIdx = (uint32_t)colIdx;
-  if (!rangeRecorders.at(fieldIdx).setMultiRange()) {
+  uint32_t fieldIdx = childrenFunctionsOnSameField(scalarFunction);
+  if (fieldIdx == UINT32_MAX || !rangeRecorders.at(fieldIdx).setMultiRange()) {
     return false;
   }
   static const std::unordered_set<std::string> supportedOrFunctions = {sIsNotNull, sGte, sGt, sLte, sLt, sEqual};
