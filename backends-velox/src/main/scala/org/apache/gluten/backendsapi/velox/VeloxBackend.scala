@@ -365,6 +365,8 @@ object VeloxBackendSettings extends BackendSettingsApi {
           windowExpression.windowFunction match {
             case _: RowNumber | _: Rank | _: CumeDist | _: DenseRank | _: PercentRank |
                 _: NthValue | _: NTile | _: Lag | _: Lead =>
+            case aggExpr: AggregateExpression if aggExpr.isDistinct =>
+              throw new GlutenNotSupportException(s"Distinct window function is not supported.")
             case aggrExpr: AggregateExpression
                 if !aggrExpr.aggregateFunction.isInstanceOf[ApproximatePercentile] =>
             case _ =>
