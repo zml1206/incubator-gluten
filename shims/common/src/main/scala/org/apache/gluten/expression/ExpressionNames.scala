@@ -208,7 +208,7 @@ object ExpressionNames {
   final val UNIX_TIMESTAMP = "unix_timestamp"
   final val ADD_MONTHS = "add_months"
   final val DATE_FORMAT = "date_format"
-  final val TRUNC = "trunc"
+  final val TRUNC = "date_trunc"
   final val DATE_TRUNC = "date_trunc"
   final val GET_TIMESTAMP = "get_timestamp" // for function: to_date/to_timestamp
   final val TIMESTAMP_ADD = "timestamp_add"

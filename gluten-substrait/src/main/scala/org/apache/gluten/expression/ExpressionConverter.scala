@@ -277,6 +277,13 @@ object ExpressionConverter extends SQLConfHelper with Logging {
           ),
           ToUnixTimestamp(u.timeExp, u.format, u.timeZoneId, u.failOnError)
         )
+      case t: TruncDate =>
+        BackendsApiManager.getSparkPlanExecApiInstance.genTruncDateTransformer(
+          substraitExprName,
+          replaceWithExpressionTransformer0(t.format, attributeSeq, expressionsMap),
+          replaceWithExpressionTransformer0(t.date, attributeSeq, expressionsMap),
+          t
+        )
       case t: TruncTimestamp =>
         BackendsApiManager.getSparkPlanExecApiInstance.genTruncTimestampTransformer(
           substraitExprName,

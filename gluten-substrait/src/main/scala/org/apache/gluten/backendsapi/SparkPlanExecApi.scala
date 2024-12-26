@@ -427,6 +427,14 @@ trait SparkPlanExecApi {
     TruncTimestampTransformer(substraitExprName, format, timestamp, original)
   }
 
+  def genTruncDateTransformer(
+      substraitExprName: String,
+      format: ExpressionTransformer,
+      date: ExpressionTransformer,
+      original: TruncDate): ExpressionTransformer = {
+    TruncDateTransformer(substraitExprName, format, date, original)
+  }
+
   def genDateDiffTransformer(
       substraitExprName: String,
       endDate: ExpressionTransformer,
