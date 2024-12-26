@@ -41,6 +41,47 @@ case class ExtractDateTransformer(
   override def right: ExpressionTransformer = child
 }
 
+case class TruncDateTransformer(
+    substraitExprName: String,
+    format: ExpressionTransformer,
+    date: ExpressionTransformer,
+    original: TruncDate)
+  extends ExpressionTransformer {
+  override def children: Seq[ExpressionTransformer] = Seq(format, date)
+
+  override def doTransform(args: java.lang.Object): ExpressionNode = {
+    if (!original.format.foldable) {
+      throw new GlutenNotSupportException(s"The format ${original.format} must be constant string.")
+    }
+    val formatStr = original.format.eval().asInstanceOf[UTF8String]
+    if (formatStr == null) {
+      throw new GlutenNotSupportException("The format is null.")
+    }
+    val newFormatStr = formatStr.toString.toLowerCase(Locale.ROOT) match {
+      case "week" => "week"
+      case "mon" | "month" | "mm" => "month"
+      case "quarter" => "quarter"
+      case "year" | "yyyy" | "yy" => "year"
+      case _ => throw new GlutenNotSupportException(s"The format $formatStr is invalidate.")
+    }
+
+    val functionMap = args.asInstanceOf[java.util.HashMap[String, java.lang.Long]]
+    val dataTypes = Seq(original.format.dataType, original.date.dataType)
+    val functionId = ExpressionBuilder.newScalarFunction(
+      functionMap,
+      ConverterUtils.makeFuncName(substraitExprName, dataTypes))
+
+    val expressionNodes = new java.util.ArrayList[ExpressionNode]()
+    val dateNode = date.doTransform(args)
+    val lowerFormatNode = ExpressionBuilder.makeStringLiteral(newFormatStr)
+    expressionNodes.add(lowerFormatNode)
+    expressionNodes.add(dateNode)
+
+    val typeNode = ConverterUtils.getTypeNode(original.dataType, original.nullable)
+    ExpressionBuilder.makeScalarFunction(functionId, expressionNodes, typeNode)
+  }
+}
+
 case class TruncTimestampTransformer(
     substraitExprName: String,
     format: ExpressionTransformer,
