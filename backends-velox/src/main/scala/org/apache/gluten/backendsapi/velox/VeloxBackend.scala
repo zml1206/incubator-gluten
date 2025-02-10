@@ -471,6 +471,8 @@ object VeloxBackendSettings extends BackendSettingsApi {
             case _: NthValue =>
             case _: Lag =>
             case _: Lead =>
+            case aggExpr: AggregateExpression if aggExpr.isDistinct =>
+              throw new GlutenNotSupportException(s"Distinct window function is not supported.")
             case ae: AggregateExpression =>
               // Velox only supports count() and count(T) signatures for the window count
               // function. Spark's count(c1, c2, ...) (counts rows where ALL arguments are
