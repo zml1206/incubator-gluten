@@ -438,6 +438,8 @@ object VeloxBackendSettings extends BackendSettingsApi {
             case nv: NthValue if !nv.input.foldable =>
             case l: Lag if !l.input.foldable =>
             case l: Lead if !l.input.foldable =>
+            case aggExpr: AggregateExpression if aggExpr.isDistinct =>
+              throw new GlutenNotSupportException(s"Distinct window function is not supported.")
             case aggrExpr: AggregateExpression
                 if !aggrExpr.aggregateFunction.isInstanceOf[ApproximatePercentile]
                   && !aggrExpr.aggregateFunction.isInstanceOf[Percentile] =>
