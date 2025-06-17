@@ -1,7 +1,7 @@
 vcpkg_download_distfile(
   ARCHIVE
   URLS
-  "https://fossies.org/linux/misc/old/libelf-0.8.13.tar.gz"
+  "https://fossies.org/linux/misc/old/libelf-0.8.13.tar.gz" "https://ftp.osuosl.org/pub/blfs/conglomeration/libelf/libelf-0.8.13.tar.gz"
   FILENAME
   "libelf-0.8.13.tar.gz"
   SHA512
