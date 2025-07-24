@@ -49,6 +49,7 @@ import org.apache.spark.sql.execution.datasources.v2.{BatchScanExec, DataSourceV
 import org.apache.spark.sql.execution.datasources.v2.text.TextScan
 import org.apache.spark.sql.execution.datasources.v2.utils.CatalogUtil
 import org.apache.spark.sql.execution.exchange.BroadcastExchangeLike
+import org.apache.spark.sql.execution.window.{WindowGroupLimitExecShim, WindowGroupLimitMode}
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.internal.SQLConf.LegacyBehaviorPolicy
 import org.apache.spark.sql.types.{IntegerType, LongType, StructField, StructType}
@@ -65,12 +66,58 @@ import java.time.ZoneOffset
 import java.util.{HashMap => JHashMap, Map => JMap}
 
 import scala.reflect.ClassTag
+import scala.reflect.runtime.{universe => ru}
 
 class Spark34Shims extends SparkShims {
   override def getDistribution(
       leftKeys: Seq[Expression],
       rightKeys: Seq[Expression]): Seq[Distribution] = {
     ClusteredDistribution(leftKeys) :: ClusteredDistribution(rightKeys) :: Nil
+  }
+
+  override def isWindowGroupLimitExec(plan: SparkPlan): Boolean = plan match {
+    case plan if plan.getClass.getSimpleName.equals("WindowGroupLimitExec") => true
+    case _ => false
+  }
+
+  override def getWindowGroupLimitExecShim(plan: SparkPlan): WindowGroupLimitExecShim = {
+    val mirror = ru.runtimeMirror(plan.getClass.getClassLoader)
+    val className = "org.apache.spark.sql.execution.window.WindowGroupLimitExec"
+    val classSymbol = mirror.staticClass(className)
+    val instanceMirror = mirror.reflect(plan)
+    val partitionSpec = instanceMirror
+      .reflectField(classSymbol.selfType.decl(ru.TermName("partitionSpec")).asTerm)
+      .get
+      .asInstanceOf[Seq[Expression]]
+    val orderSpec = instanceMirror
+      .reflectField(classSymbol.selfType.decl(ru.TermName("orderSpec")).asTerm)
+      .get
+      .asInstanceOf[Seq[SortOrder]]
+    val rankLikeFunction = instanceMirror
+      .reflectField(classSymbol.selfType.decl(ru.TermName("rankLikeFunction")).asTerm)
+      .get
+      .asInstanceOf[Expression]
+    val limit = instanceMirror
+      .reflectField(classSymbol.selfType.decl(ru.TermName("limit")).asTerm)
+      .get
+      .asInstanceOf[Int]
+    val mode = instanceMirror
+      .reflectField(classSymbol.selfType.decl(ru.TermName("mode")).asTerm)
+      .get
+      .asInstanceOf[WindowGroupLimitMode]
+    val child = instanceMirror
+      .reflectField(classSymbol.selfType.decl(ru.TermName("child")).asTerm)
+      .get
+      .asInstanceOf[SparkPlan]
+
+    WindowGroupLimitExecShim(
+      partitionSpec,
+      orderSpec,
+      rankLikeFunction,
+      limit,
+      mode,
+      child
+    )
   }
 
   override def scalarExpressionMappings: Seq[Sig] = {
