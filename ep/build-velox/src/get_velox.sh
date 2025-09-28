@@ -17,7 +17,7 @@
 set -exu
 
 VELOX_REPO=https://github.com/zml1206/velox.git
-VELOX_BRANCH=2025_08_11
+VELOX_BRANCH=2025_08_11_arm
 VELOX_HOME=""
 RUN_SETUP_SCRIPT=ON
 VELOX_ENHANCED_REPO=https://github.com/IBM/velox.git
