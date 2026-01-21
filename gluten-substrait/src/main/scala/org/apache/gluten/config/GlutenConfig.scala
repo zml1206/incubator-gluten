@@ -96,6 +96,10 @@ class GlutenConfig(conf: SQLConf) extends GlutenCoreConfig(conf) {
 
   def enableColumnarWindow: Boolean = getConf(COLUMNAR_WINDOW_ENABLED)
 
+  def enableUnorderedUnpartitionedWindow: Boolean = getConf(UNORDERED_UNPARTITIONED_WINDOW_ENABLED)
+
+  def enableUnorderedWindow: Boolean = getConf(UNORDERED_WINDOW_ENABLED)
+
   def enableColumnarWindowGroupLimit: Boolean = getConf(COLUMNAR_WINDOW_GROUP_LIMIT_ENABLED)
 
   def enableAppendData: Boolean = getConf(COLUMNAR_APPEND_DATA_ENABLED)
@@ -855,6 +859,18 @@ object GlutenConfig extends ConfigRegistry {
   val COLUMNAR_WINDOW_ENABLED =
     buildConf("spark.gluten.sql.columnar.window")
       .doc("Enable or disable columnar window.")
+      .booleanConf
+      .createWithDefault(true)
+
+  val UNORDERED_UNPARTITIONED_WINDOW_ENABLED =
+    buildConf("spark.gluten.sql.unorderdUnpartitionedWindow")
+      .doc("Enable or disable unordered and unpartitioned window.")
+      .booleanConf
+      .createWithDefault(false)
+
+  val UNORDERED_WINDOW_ENABLED =
+    buildConf("spark.gluten.sql.unorderdWindow")
+      .doc("Enable or disable unordered window.")
       .booleanConf
       .createWithDefault(true)
 
