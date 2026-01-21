@@ -145,6 +145,11 @@ object Validators {
     override def validate(plan: SparkPlan): Validator.OutCome = plan match {
       case p: SortExec if !glutenConf.enableColumnarSort => fail(p)
       case p: WindowExec if !glutenConf.enableColumnarWindow => fail(p)
+      case p: WindowExec if !glutenConf.enableUnorderedWindow && p.orderSpec.isEmpty => fail(p)
+      case p: WindowExec
+          if !glutenConf.enableUnorderedUnpartitionedWindow
+            && p.orderSpec.isEmpty && p.partitionSpec.forall(_.foldable) =>
+        fail(p)
       case p: SortMergeJoinExec if !glutenConf.enableColumnarSortMergeJoin => fail(p)
       case p: BatchScanExec if !glutenConf.enableColumnarBatchScan => fail(p)
       case p: FileSourceScanExec if !glutenConf.enableColumnarFileScan => fail(p)
