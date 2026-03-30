@@ -70,7 +70,9 @@ import scala.reflect.runtime.{universe => ru}
 
 class Spark34Shims extends SparkShims {
   private lazy val queryPlanLocalIdMapAccessor = {
+    // scalastyle:off classforname
     val queryPlanModuleClass = Class.forName("org.apache.spark.sql.catalyst.plans.QueryPlan$")
+    // scalastyle:on classforname
     val queryPlanModule = queryPlanModuleClass.getField("MODULE$").get(null)
     val localIdMapMethod = queryPlanModuleClass.getMethod("localIdMap")
     () =>
