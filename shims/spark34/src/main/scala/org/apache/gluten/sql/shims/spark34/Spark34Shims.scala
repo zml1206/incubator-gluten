@@ -69,6 +69,20 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.{universe => ru}
 
 class Spark34Shims extends SparkShims {
+  private lazy val queryPlanLocalIdMapAccessor = {
+    val queryPlanModuleClass = Class.forName("org.apache.spark.sql.catalyst.plans.QueryPlan$")
+    val queryPlanModule = queryPlanModuleClass.getField("MODULE$").get(null)
+    val localIdMapMethod = queryPlanModuleClass.getMethod("localIdMap")
+    () =>
+      localIdMapMethod
+        .invoke(queryPlanModule)
+        .asInstanceOf[ThreadLocal[java.util.Map[QueryPlan[_], Int]]]
+  }
+
+  private def queryPlanLocalIdMap: ThreadLocal[java.util.Map[QueryPlan[_], Int]] = {
+    queryPlanLocalIdMapAccessor()
+  }
+
   override def getDistribution(
       leftKeys: Seq[Expression],
       rightKeys: Seq[Expression]): Seq[Distribution] = {
@@ -640,16 +654,29 @@ class Spark34Shims extends SparkShims {
     Seq(expr.srcArrayExpr, expr.posExpr, expr.itemExpr, Literal(expr.legacyNegativeIndex))
   }
 
+  override def withOperatorIdMap[T](idMap: java.util.Map[QueryPlan[_], Int])(body: => T): T = {
+    val localIdMap = queryPlanLocalIdMap
+    val prevIdMap = localIdMap.get()
+    try {
+      localIdMap.set(idMap)
+      body
+    } finally {
+      localIdMap.set(prevIdMap)
+    }
+  }
+
   override def getOperatorId(plan: QueryPlan[_]): Option[Int] = {
-    plan.getTagValue(QueryPlan.OP_ID_TAG)
+    Option(queryPlanLocalIdMap.get().get(plan))
   }
 
   override def setOperatorId(plan: QueryPlan[_], opId: Int): Unit = {
-    plan.setTagValue(QueryPlan.OP_ID_TAG, opId)
+    val map = queryPlanLocalIdMap.get()
+    assert(!map.containsKey(plan))
+    map.put(plan, opId)
   }
 
   override def unsetOperatorId(plan: QueryPlan[_]): Unit = {
-    plan.unsetTagValue(QueryPlan.OP_ID_TAG)
+    queryPlanLocalIdMap.get().remove(plan)
   }
   override def isParquetFileEncrypted(
       fileStatus: LocatedFileStatus,
