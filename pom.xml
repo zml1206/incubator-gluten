@@ -71,7 +71,8 @@
     <spark.major.version>3</spark.major.version>
     <sparkbundle.version>3.5</sparkbundle.version>
     <spark.plain.version>35</spark.plain.version>
-    <spark.version>3.5.5</spark.version>
+    <spark.version>3.5.8.1</spark.version>
+    <spark.test.version>${spark.version}</spark.test.version>
     <sparkshim.artifactId>spark-sql-columnar-shims-spark35</sparkshim.artifactId>
     <iceberg.version>1.10.0</iceberg.version>
     <iceberg.binary.version>10</iceberg.binary.version>
@@ -298,7 +299,7 @@
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-core_${scala.binary.version}</artifactId>
-        <version>${spark.version}</version>
+        <version>${spark.test.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
         <exclusions>
@@ -335,7 +336,7 @@
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-catalyst_${scala.binary.version}</artifactId>
-        <version>${spark.version}</version>
+        <version>${spark.test.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
         <exclusions>
@@ -348,7 +349,7 @@
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-sql_${scala.binary.version}</artifactId>
-        <version>${spark.version}</version>
+        <version>${spark.test.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
         <exclusions>
@@ -365,14 +366,14 @@
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-hive_${scala.binary.version}</artifactId>
-        <version>${spark.version}</version>
+        <version>${spark.test.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-tags_${scala.binary.version}</artifactId>
-        <version>${spark.version}</version>
+        <version>${spark.test.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
@@ -498,6 +499,28 @@
       <id>gcs-maven-central-mirror</id>
       <name>GCS Maven Central mirror</name>
       <url>https://maven-central.storage-download.googleapis.com/maven2/</url>
+    </repository>
+    <repository>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>guandata-release</id>
+      <name>Guandata Release</name>
+      <url>https://app.mayidata.com/nexus/repository/maven-releases</url>
+    </repository>
+    <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>guandata-snapshot</id>
+      <name>Guandata Snapshot</name>
+      <url>https://app.mayidata.com/nexus/repository/maven-snapshots/</url>
     </repository>
     <repository>
       <releases>
@@ -1194,7 +1217,8 @@
         <sparkbundle.version>3.5</sparkbundle.version>
         <spark.plain.version>35</spark.plain.version>
         <sparkshim.artifactId>spark-sql-columnar-shims-spark35</sparkshim.artifactId>
-        <spark.version>3.5.5</spark.version>
+        <spark.version>3.5.8.1</spark.version>
+        <spark.test.version>3.5.5</spark.test.version>
         <servlet.api.groupId>jakarta.servlet</servlet.api.groupId>
         <servlet.api.artifactId>jakarta.servlet-api</servlet.api.artifactId>
         <servlet.api.version>6.0.0</servlet.api.version>
