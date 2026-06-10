@@ -49,6 +49,13 @@
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
     </dependency>
+    <dependency>
+      <groupId>${servlet.api.groupId}</groupId>
+      <artifactId>${servlet.api.artifactId}</artifactId>
+      <version>${servlet.api.version}</version>
+      <scope>provided</scope>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
 
   <build>

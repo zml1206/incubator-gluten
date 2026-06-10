@@ -17,9 +17,9 @@
 package org.apache.spark.sql.execution.ui
 
 /**
- * Ensures compatibility for the type HttpServletRequest across Spark 4.0 and earlier versions.
- * Starting from Spark 4.0, `jakarta.servlet.http.HttpServletRequest` is used.
+ * Ensures compatibility for the type HttpServletRequest across Spark versions and downstream Spark
+ * branches.
  */
 object TypeAlias {
-  type HttpServletRequest = javax.servlet.http.HttpServletRequest
+  type HttpServletRequest = jakarta.servlet.http.HttpServletRequest
 }
